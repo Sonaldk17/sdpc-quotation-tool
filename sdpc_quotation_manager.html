@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SDPC Quotation Manager</title>
+<style>
+:root{
+  --ink:#2A2420;
+  --ink-soft:#6b6157;
+  --paper:#FAF7F1;
+  --panel:#FFFFFF;
+  --line:#E4DDD1;
+  --maroon:#7E2231;
+  --maroon-deep:#5E1524;
+  --gold:#B08A3E;
+  --field:#F3EEE4;
+  --ok:#3E6B4F;
+  --danger:#B23A2E;
+  --shadow: 0 1px 2px rgba(42,36,32,.06);
+  --serif: "Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,serif;
+  --sans: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:var(--paper);color:var(--ink);font-family:var(--sans);}
+body{-webkit-font-smoothing:antialiased;}
+
+.app{display:grid;grid-template-columns: 400px 1fr;min-height:100vh;}
+@media (max-width: 940px){ .app{grid-template-columns: 1fr;} }
+
+/* ---------- LEFT: control panel ---------- */
+.panel{background:var(--panel);border-right:1px solid var(--line);padding:22px 22px 60px;overflow-y:auto;}
+@media (max-width: 940px){ .panel{border-right:none;border-bottom:1px solid var(--line);} }
+
+.brand-row{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
+.brand-row img {
+    width: 80px;
+}
+.brand-mark{width:30px;height:30px;border-radius:50%;background:var(--maroon);position:relative;flex:none;}
+.brand-mark::after{content:"";position:absolute;inset:7px;border-radius:50%;border:1.5px solid #F2D9AE;}
+.brand-name{font-family:var(--serif);font-size:15px;letter-spacing:.02em;color:var(--maroon-deep);}
+.panel-sub{font-size:12px;color:var(--ink-soft);margin:0 0 22px;}
+
+.section{margin-bottom:22px;}
+.section-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--gold);font-weight:600;margin-bottom:10px;}
+
+label{display:block;font-size:12.5px;color:var(--ink-soft);margin-bottom:4px;margin-top:10px;}
+label:first-child{margin-top:0;}
+input[type=text],input[type=date],input[type=number],textarea,select{
+  width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;
+  background:var(--field);font-family:var(--sans);font-size:13.5px;color:var(--ink);
+}
+textarea{resize:vertical;min-height:46px;line-height:1.4;}
+input:focus,textarea:focus,select:focus{outline:2px solid var(--maroon);outline-offset:1px;background:#fff;}
+
+.client-picker{display:flex;gap:6px;}
+.client-picker select{flex:1;}
+
+.row-card{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;background:#FFFDFA;position:relative;}
+.row-card .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
+.row-remove{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer;padding:2px 6px;}
+.row-remove:hover{text-decoration:underline;}
+
+button{font-family:var(--sans);cursor:pointer;}
+.btn{border:1px solid var(--line);background:var(--field);color:var(--ink);padding:8px 12px;border-radius:6px;font-size:13px;font-weight:500;}
+.btn:hover{border-color:var(--gold);}
+.btn-primary{background:var(--maroon);border-color:var(--maroon);color:#fff;}
+.btn-primary:hover{background:var(--maroon-deep);}
+.btn-full{width:100%;margin-top:4px;}
+.btn-ghost{background:none;border:1px dashed var(--line);color:var(--ink-soft);}
+.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+
+.saved-list{max-height:150px;overflow-y:auto;border:1px solid var(--line);border-radius:6px;}
+.saved-item{display:flex;justify-content:space-between;align-items:center;padding:7px 10px;font-size:12.5px;border-bottom:1px solid var(--line);}
+.saved-item:last-child{border-bottom:none;}
+.saved-item button{background:none;border:none;color:var(--maroon);font-size:11.5px;padding:2px 4px;}
+.saved-item .meta{color:var(--ink-soft);}
+.empty-note{font-size:12px;color:var(--ink-soft);font-style:italic;padding:8px 2px;}
+
+.status-msg{font-size:12px;margin-top:8px;min-height:16px;color:var(--ok);}
+
+/* ---------- RIGHT: preview ---------- */
+.preview-wrap{padding:32px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+.toolbar{width:100%;max-width:760px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+
+.sheet{width:100%;max-width:760px;background:#fff;box-shadow:0 4px 24px rgba(42,36,32,.12);padding:40px 44px;font-family:var(--sans);color:#232019;}
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--maroon);padding-bottom:14px;margin-bottom:18px;}
+.sheet-brand{display:flex;align-items:center;gap:12px;}
+.sheet-logo img {
+    width: 200px;
+}
+.sheet-contact{text-align:right;font-size:10.5px;line-height:1.6;color:#4a443c;}
+.sheet-contact b{color:#232019;}
+
+.sheet-title{text-align:center;font-family:var(--serif);font-size:17px;letter-spacing:.08em;margin:6px 0 18px;position:relative;}
+.sheet-title::after{content:"";display:block;width:64px;height:2px;background:var(--gold);margin:6px auto 0;}
+.sheet-date{text-align:right;font-size:12px;margin-bottom:6px;}
+
+.sheet-to{font-size:13px;line-height:1.55;margin-bottom:14px;white-space:pre-line;}
+.sheet-sub{font-size:13px;margin-bottom:12px;}
+.sheet-para{font-size:13px;line-height:1.6;margin-bottom:16px;color:#3a352e;}
+
+table.qtable{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
+table.qtable th{background:var(--maroon);color:#fff;font-weight:600;padding:8px 7px;text-align:center;border:1px solid var(--maroon-deep);font-size:11px;}
+table.qtable td{border:1px solid #DED2C2;padding:7px;vertical-align:middle;text-align:center;}
+table.qtable td.plant{font-weight:600;}
+table.qtable td.left{text-align:left;}
+table.qtable tr.total-row td{background:#F3E4D8;font-weight:700;}
+
+.sheet-includes{font-size:12.5px;margin-bottom:16px;}
+.sheet-includes .h{font-weight:700;margin-bottom:6px;}
+.sheet-includes ul{margin:0;padding-left:18px;line-height:1.6;}
+
+.sheet-terms .h{font-weight:700;text-decoration:underline;margin-bottom:6px;font-size:13px;}
+.sheet-terms ol{margin:0 0 18px;padding-left:20px;font-size:12.5px;line-height:1.7;}
+
+.sheet-close{font-size:13px;line-height:1.6;margin-bottom:34px;}
+.sheet-sign{text-align:right;font-size:13px;line-height:1.5;}
+.sheet-sign b{display:block;}
+
+.sheet-foot{border-top:1px solid var(--line);margin-top:20px;padding-top:10px;text-align:center;font-size:9.5px;line-height:1.6;color:#6b6157;}
+.sheet-foot b{color:#4a443c;}
+
+@media print{
+  body{background:#fff;}
+  .panel,.toolbar{display:none !important;}
+  .app{display:block;}
+  .preview-wrap{padding:0;}
+  .sheet{box-shadow:none;max-width:none;padding:18mm 16mm;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- ================= LEFT CONTROL PANEL ================= -->
+  <div class="panel">
+    <div class="brand-row"><img src="img/logo.png" alt=""><div class="brand-name">Quotation Manager</div></div>
+    <p class="panel-sub">Build a quotation, save the client, then print or send it.</p>
+
+    <div class="section">
+      <div class="section-title">Client</div>
+      <div class="client-picker">
+        <select id="clientSelect"><option value="">— New client —</option></select>
+        <button class="btn" id="deleteClientBtn" title="Delete this saved client">Del</button>
+      </div>
+      <label>Client / company name</label>
+      <input type="text" id="clientName" placeholder="e.g. Panchal Engineers India Pvt Limited">
+      <label>Address</label>
+      <textarea id="clientAddress" placeholder="D-66, MIDC Industrial Area, Ambad, Nashik."></textarea>
+      <label>Client email</label>
+      <input type="text" id="clientEmail" placeholder="client@example.com">
+      <button class="btn btn-full" id="saveClientBtn">Save client for next time</button>
+      <div class="status-msg" id="clientStatus"></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Quotation details</div>
+      <label>Date</label>
+      <input type="date" id="quoteDate">
+      <label>Subject line</label>
+      <input type="text" id="quoteSubject" value="Quotation for Comprehensive Pest Management Services">
+    </div>
+
+    <div class="section">
+      <div class="section-title">Plants / locations</div>
+      <div id="rowsContainer"></div>
+      <button class="btn btn-ghost btn-full" id="addRowBtn">+ Add plant / location row</button>
+      <p style="font-size:11.5px;color:var(--ink-soft);margin-top:8px;">Tip: give two rows the same Treatment, Pests, Area &amp; Frequency and they'll merge into one block in the preview — just like D‑61 to D‑67 in your original format.</p>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Terms &amp; conditions</div>
+      <div id="termsContainer"></div>
+      <button class="btn btn-ghost btn-full" id="addTermBtn">+ Add term</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Your company details</div>
+      <label>Company name</label>
+      <input type="text" id="coName">
+      <label>Contact numbers</label>
+      <input type="text" id="coContact">
+      <label>Office address</label>
+      <input type="text" id="coOffice">
+      <label>Branch</label>
+      <input type="text" id="coBranch">
+      <label>Email</label>
+      <input type="text" id="coEmail">
+      <label>Website</label>
+      <input type="text" id="coWebsite">
+      <label>License no.</label>
+      <input type="text" id="coLicense">
+      <label>Services line (footer)</label>
+      <textarea id="coServices"></textarea>
+      <button class="btn btn-full" id="saveCompanyBtn">Save company details</button>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Saved quotations for this client</div>
+      <div class="saved-list" id="savedQuotesList"><div class="empty-note">Select or save a client first.</div></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Backup &amp; restore</div>
+      <p style="font-size:11.5px;color:var(--ink-soft);margin:0 0 8px;">Your clients and quotations are saved in this browser only. Download a backup regularly, or to move your data to another computer or browser.</p>
+      <div class="btn-row">
+        <button class="btn" id="exportBtn">Download backup</button>
+        <button class="btn" id="importBtnTrigger">Restore backup</button>
+      </div>
+      <input type="file" id="importFile" accept="application/json" style="display:none;">
+    </div>
+  </div>
+
+  <!-- ================= RIGHT PREVIEW ================= -->
+  <div class="preview-wrap">
+    <div class="toolbar">
+      <button class="btn" id="saveQuoteBtn">Save this quotation</button>
+      <button class="btn" id="whatsappBtn">Prep WhatsApp message</button>
+      <button class="btn" id="emailBtn">Prep email</button>
+      <button class="btn btn-primary" id="printBtn">Print / Save as PDF</button>
+    </div>
+
+    <div class="sheet" id="sheet">
+      <div class="sheet-head">
+        <div class="sheet-brand">
+          <div class="sheet-logo">
+            <img src="img/logo.png" alt="">
+          </div>
+        </div>
+        <div class="sheet-contact">
+          <div><b>Contact:</b> <span id="pv-coContact"></span></div>
+          <div><b>Office:</b> <span id="pv-coOffice"></span></div>
+          <div><b>Branch:</b> <span id="pv-coBranch"></span></div>
+          <div><b>Email:</b> <span id="pv-coEmail"></span></div>
+          <div><b>License No:</b> <span id="pv-coLicense"></span></div>
+        </div>
+      </div>
+
+      <div class="sheet-title">QUOTATION</div>
+      <div class="sheet-date">Date: <span id="pv-date"></span></div>
+
+      <div class="sheet-to">To,<br><span id="pv-clientBlock"></span></div>
+      <div class="sheet-sub"><b>Sub:</b> <span id="pv-subject"></span></div>
+      <div class="sheet-para">Dear Sir,<br>Thank you for the opportunity to submit our quotation for pest control services at your premises. Based on your requirements, we are pleased to offer the following services along with our commercial terms and conditions.</div>
+
+      <table class="qtable">
+        <thead>
+          <tr><th>Plant</th><th>Treatment</th><th>Pests Treated</th><th>Area Covered</th><th>Services Frequency</th><th>Cost (per month)</th></tr>
+        </thead>
+        <tbody id="pv-tbody"></tbody>
+      </table>
+
+      <div class="sheet-includes">
+        <div class="h">Service Includes</div>
+        <ul>
+          <li>Thorough inspection of the premises</li>
+          <li>Treatment using government-approved pest control products</li>
+          <li>Preventive and corrective pest management</li>
+          <li>Service report will be maintained for all services</li>
+        </ul>
+      </div>
+
+      <div class="sheet-terms">
+        <div class="h">Terms &amp; Conditions:</div>
+        <ol id="pv-terms"></ol>
+      </div>
+
+      <div class="sheet-close">Looking forward to your inquiry &amp; opportunity to render our service.<br>Thank you and regards.</div>
+      <div class="sheet-sign">Yours Faithfully,<br><br><br><b id="pv-signName">Manager</b><span id="pv-signCo">Sai Datta Pest Control</span></div>
+
+      <div class="sheet-foot">
+        <b id="pv-footName">Sai Datta Pest Control</b><br>
+        Office: <span id="pv-footOffice"></span> | Pest Control License No.: <span id="pv-footLicense"></span><br>
+        Contact: <span id="pv-footContact"></span><br>
+        Email: <span id="pv-footEmail"></span> | Website: <span id="pv-footWebsite"></span><br>
+        Services: <span id="pv-footServices"></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_COMPANY = {
+  name:"Sai Datta Pest Control",
+  contact:"9028031489, 9850078089, 8208395422",
+  office:"Opp. to Rohit Petrol Pump, Trimbak Road 422012",
+  branch:"Nerul, Navi Mumbai",
+  email:"saidattapestcontrol@gmail.com",
+  website:"www.sdpestcontrol.in",
+  license:"LAID06060381",
+  services:"Industrial Pest Control, Domestic Pest Control, Termite Infestation, Herbal Pest Control, Wood Borer Infestation, Rodent Problems, etc."
+};
+const DEFAULT_TERMS = ["Payment terms: Payment every month.","Contract Duration: 12 Months"];
+const DEFAULT_ROW = ()=>({plant:"",treatment:"General Pest Control service\nRodent Control service",pests:"Cockroach, Ants, Lizards, Rats, Mouse",area:"Total area of the premises",frequency:"Monthly:\n- 04 services - General Pest Control\n- 02 services - Rodent Control",cost:""});
+
+let clients = [];        // [{id,name,address}]
+let quotations = [];      // [{id,clientId,clientName,clientAddress,date,subject,rows,terms,total,savedAt}]
+let currentClientId = "";
+let rows = [DEFAULT_ROW()];
+let terms = [...DEFAULT_TERMS];
+
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,7); }
+function todayISO(){ return new Date().toISOString().slice(0,10); }
+function fmtDateDMY(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${d}-${m}-${y}`; }
+function money(n){ n = Number(n)||0; return "Rs. "+n.toLocaleString("en-IN")+"/-"; }
+
+const STORE_PREFIX = "sdpc-quote:";
+async function storageGet(key){
+  try{ const raw = localStorage.getItem(STORE_PREFIX+key); return raw ? JSON.parse(raw) : null; }
+  catch(e){ console.error("storage get failed", e); return null; }
+}
+async function storageSet(key, value){
+  try{ localStorage.setItem(STORE_PREFIX+key, JSON.stringify(value)); return true; }
+  catch(e){ console.error("storage set failed — browser storage may be full or disabled", e); alert("Couldn't save: your browser's local storage seems to be full or disabled."); return false; }
+}
+
+/* ---- Backup / restore (localStorage is per-browser, so this is the way to move data between devices or keep a safety copy) ---- */
+async function exportBackup(){
+  const data = {
+    company: await storageGet("company-info") || DEFAULT_COMPANY,
+    clients: await storageGet("clients-list") || [],
+    quotations: await storageGet("quotations-list") || [],
+    exportedAt: new Date().toISOString()
+  };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "sdpc-quotation-backup-"+todayISO()+".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
+}
+async function importBackup(file){
+  try{
+    const text = await file.text();
+    const data = JSON.parse(text);
+    if(data.company) await storageSet("company-info", data.company);
+    if(data.clients) await storageSet("clients-list", data.clients);
+    if(data.quotations) await storageSet("quotations-list", data.quotations);
+    alert("Backup restored. Reloading…");
+    location.reload();
+  }catch(e){
+    alert("Couldn't read that file — make sure it's a backup exported from this tool.");
+  }
+}
+
+/* ---------------- INIT ---------------- */
+async function init(){
+  const co = await storageGet("company-info") || DEFAULT_COMPANY;
+  fillCompanyForm(co);
+
+  clients = await storageGet("clients-list") || [];
+  quotations = await storageGet("quotations-list") || [];
+  refreshClientSelect();
+
+  document.getElementById("quoteDate").value = todayISO();
+  renderRows();
+  renderTerms();
+  renderPreview();
+
+  bindEvents();
+}
+
+function fillCompanyForm(co){
+  document.getElementById("coName").value = co.name||"";
+  document.getElementById("coContact").value = co.contact||"";
+  document.getElementById("coOffice").value = co.office||"";
+  document.getElementById("coBranch").value = co.branch||"";
+  document.getElementById("coEmail").value = co.email||"";
+  document.getElementById("coWebsite").value = co.website||"";
+  document.getElementById("coLicense").value = co.license||"";
+  document.getElementById("coServices").value = co.services||"";
+}
+function getCompanyForm(){
+  return {
+    name: document.getElementById("coName").value.trim(),
+    contact: document.getElementById("coContact").value.trim(),
+    office: document.getElementById("coOffice").value.trim(),
+    branch: document.getElementById("coBranch").value.trim(),
+    email: document.getElementById("coEmail").value.trim(),
+    website: document.getElementById("coWebsite").value.trim(),
+    license: document.getElementById("coLicense").value.trim(),
+    services: document.getElementById("coServices").value.trim(),
+  };
+}
+
+/* ---------------- CLIENTS ---------------- */
+function refreshClientSelect(){
+  const sel = document.getElementById("clientSelect");
+  sel.innerHTML = '<option value="">— New client —</option>' +
+    clients.map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join("");
+  sel.value = currentClientId;
+}
+function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m])); }
+
+async function onSelectClient(id){
+  currentClientId = id;
+  const c = clients.find(x=>x.id===id);
+  document.getElementById("clientName").value = c ? c.name : "";
+  document.getElementById("clientAddress").value = c ? c.address : "";
+  document.getElementById("clientEmail").value = c ? (c.email||"") : "";
+  document.getElementById("clientStatus").textContent = "";
+  renderPreview();
+  renderSavedQuotesList();
+}
+
+async function saveClient(){
+  const name = document.getElementById("clientName").value.trim();
+  const address = document.getElementById("clientAddress").value.trim();
+  const email = document.getElementById("clientEmail").value.trim();
+  if(!name){ document.getElementById("clientStatus").textContent = "Add a client name first."; return; }
+  if(currentClientId){
+    const c = clients.find(x=>x.id===currentClientId);
+    c.name=name; c.address=address; c.email=email;
+  } else {
+    currentClientId = uid();
+    clients.push({id:currentClientId, name, address, email});
+  }
+  await storageSet("clients-list", clients);
+  refreshClientSelect();
+  document.getElementById("clientStatus").textContent = "Saved.";
+  renderPreview();
+  renderSavedQuotesList();
+}
+
+async function deleteClient(){
+  if(!currentClientId) return;
+  if(!confirm("Delete this saved client? Their saved quotations stay on record but won't be linked to a dropdown entry.")) return;
+  clients = clients.filter(c=>c.id!==currentClientId);
+  await storageSet("clients-list", clients);
+  currentClientId = "";
+  document.getElementById("clientName").value="";
+  document.getElementById("clientAddress").value="";
+  document.getElementById("clientEmail").value="";
+  refreshClientSelect();
+  renderPreview();
+  renderSavedQuotesList();
+}
+
+/* ---------------- ROWS ---------------- */
+function renderRows(){
+  const c = document.getElementById("rowsContainer");
+  c.innerHTML = "";
+  rows.forEach((r,i)=>{
+    const card = document.createElement("div");
+    card.className = "row-card";
+    card.innerHTML = `
+      ${rows.length>1 ? `<button class="row-remove" data-i="${i}">Remove</button>` : ""}
+      <label>Plant / location</label>
+      <input type="text" data-f="plant" data-i="${i}" value="${escapeHtml(r.plant)}" placeholder="e.g. D-61">
+      <div class="grid2">
+        <div><label>Treatment</label><textarea data-f="treatment" data-i="${i}">${escapeHtml(r.treatment)}</textarea></div>
+        <div><label>Pests treated</label><textarea data-f="pests" data-i="${i}">${escapeHtml(r.pests)}</textarea></div>
+      </div>
+      <div class="grid2">
+        <div><label>Area covered</label><textarea data-f="area" data-i="${i}">${escapeHtml(r.area)}</textarea></div>
+        <div><label>Frequency</label><textarea data-f="frequency" data-i="${i}">${escapeHtml(r.frequency)}</textarea></div>
+      </div>
+      <label>Cost per month (₹)</label>
+      <input type="number" data-f="cost" data-i="${i}" value="${escapeHtml(r.cost)}" placeholder="3200">
+    `;
+    c.appendChild(card);
+  });
+  c.querySelectorAll("[data-f]").forEach(el=>{
+    el.addEventListener("input", e=>{
+      const i = +e.target.dataset.i, f = e.target.dataset.f;
+      rows[i][f] = e.target.value;
+      renderPreview();
+    });
+  });
+  c.querySelectorAll(".row-remove").forEach(btn=>{
+    btn.addEventListener("click", e=>{
+      rows.splice(+e.target.dataset.i,1);
+      renderRows(); renderPreview();
+    });
+  });
+}
+
+/* ---------------- TERMS ---------------- */
+function renderTerms(){
+  const c = document.getElementById("termsContainer");
+  c.innerHTML = "";
+  terms.forEach((t,i)=>{
+    const wrap = document.createElement("div");
+    wrap.style.display="flex"; wrap.style.gap="6px"; wrap.style.marginTop="8px";
+    wrap.innerHTML = `<input type="text" data-i="${i}" value="${escapeHtml(t)}" style="flex:1;">
+      ${terms.length>1 ? `<button class="btn row-remove-term" data-i="${i}" style="padding:4px 8px;position:static;">✕</button>`:""}`;
+    c.appendChild(wrap);
+  });
+  c.querySelectorAll("input[data-i]").forEach(el=>{
+    el.addEventListener("input", e=>{ terms[+e.target.dataset.i] = e.target.value; renderPreview(); });
+  });
+  c.querySelectorAll(".row-remove-term").forEach(btn=>{
+    btn.addEventListener("click", e=>{ terms.splice(+e.target.dataset.i,1); renderTerms(); renderPreview(); });
+  });
+}
+
+/* ---------------- PREVIEW ---------------- */
+function groupRows(rws){
+  const groups = [];
+  rws.forEach(r=>{
+    const key = r.treatment+"|"+r.pests+"|"+r.area+"|"+r.frequency;
+    const last = groups[groups.length-1];
+    if(last && last.key===key){ last.items.push(r); }
+    else groups.push({key, treatment:r.treatment, pests:r.pests, area:r.area, frequency:r.frequency, items:[r]});
+  });
+  return groups;
+}
+
+function renderPreview(){
+  const co = getCompanyForm();
+  document.getElementById("pv-coName").textContent = co.name;
+  document.getElementById("pv-coContact").textContent = co.contact;
+  document.getElementById("pv-coOffice").textContent = co.office;
+  document.getElementById("pv-coBranch").textContent = co.branch;
+  document.getElementById("pv-coEmail").textContent = co.email;
+  document.getElementById("pv-coLicense").textContent = co.license;
+  document.getElementById("pv-signCo").textContent = co.name;
+  document.getElementById("pv-footName").textContent = co.name;
+  document.getElementById("pv-footOffice").textContent = co.office;
+  document.getElementById("pv-footLicense").textContent = co.license;
+  document.getElementById("pv-footContact").textContent = co.contact;
+  document.getElementById("pv-footEmail").textContent = co.email;
+  document.getElementById("pv-footWebsite").textContent = co.website;
+  document.getElementById("pv-footServices").textContent = co.services;
+
+  document.getElementById("pv-date").textContent = fmtDateDMY(document.getElementById("quoteDate").value);
+  const name = document.getElementById("clientName").value.trim();
+  const addr = document.getElementById("clientAddress").value.trim();
+  document.getElementById("pv-clientBlock").textContent = [name, addr].filter(Boolean).join(",\n");
+  document.getElementById("pv-subject").textContent = document.getElementById("quoteSubject").value.trim();
+
+  const tbody = document.getElementById("pv-tbody");
+  tbody.innerHTML = "";
+  let total = 0;
+  const groups = groupRows(rows);
+  groups.forEach(g=>{
+    g.items.forEach((r,idx)=>{
+      total += Number(r.cost)||0;
+      const tr = document.createElement("tr");
+      let cells = `<td class="plant">${escapeHtml(r.plant)||"—"}</td>`;
+      if(idx===0){
+        cells += `<td rowspan="${g.items.length}" class="left">${escapeHtml(g.treatment).replace(/\n/g,"<br>")}</td>`;
+        cells += `<td rowspan="${g.items.length}">${escapeHtml(g.pests).replace(/\n/g,"<br>")}</td>`;
+        cells += `<td rowspan="${g.items.length}">${escapeHtml(g.area).replace(/\n/g,"<br>")}</td>`;
+        cells += `<td rowspan="${g.items.length}" class="left">${escapeHtml(g.frequency).replace(/\n/g,"<br>")}</td>`;
+      }
+      cells += `<td>${money(r.cost)}</td>`;
+      tr.innerHTML = cells;
+      tbody.appendChild(tr);
+    });
+  });
+  const totalTr = document.createElement("tr");
+  totalTr.className = "total-row";
+  totalTr.innerHTML = `<td colspan="5">TOTAL</td><td>${money(total)}</td>`;
+  tbody.appendChild(totalTr);
+
+  const termsOl = document.getElementById("pv-terms");
+  termsOl.innerHTML = terms.map(t=>`<li>${escapeHtml(t)}</li>`).join("");
+
+  return total;
+}
+
+/* ---------------- SAVE / LOAD QUOTATIONS ---------------- */
+async function saveQuotation(){
+  const name = document.getElementById("clientName").value.trim();
+  if(!name){ alert("Add a client name before saving the quotation."); return; }
+  if(!currentClientId){ await saveClient(); }
+  const total = renderPreview();
+  const record = {
+    id: uid(),
+    clientId: currentClientId,
+    clientName: name,
+    clientAddress: document.getElementById("clientAddress").value.trim(),
+    date: document.getElementById("quoteDate").value,
+    subject: document.getElementById("quoteSubject").value.trim(),
+    rows: JSON.parse(JSON.stringify(rows)),
+    terms: [...terms],
+    total,
+    savedAt: Date.now()
+  };
+  quotations.push(record);
+  await storageSet("quotations-list", quotations);
+  renderSavedQuotesList();
+  flashToolbarStatus("Quotation saved.");
+}
+
+function renderSavedQuotesList(){
+  const box = document.getElementById("savedQuotesList");
+  const list = quotations.filter(q=>q.clientId===currentClientId).sort((a,b)=>b.savedAt-a.savedAt);
+  if(!currentClientId){ box.innerHTML = '<div class="empty-note">Select or save a client first.</div>'; return; }
+  if(list.length===0){ box.innerHTML = '<div class="empty-note">No saved quotations yet for this client.</div>'; return; }
+  box.innerHTML = list.map(q=>`
+    <div class="saved-item">
+      <span>${fmtDateDMY(q.date)} · ${money(q.total)}</span>
+      <span><button data-id="${q.id}" class="loadQ">Load</button> <button data-id="${q.id}" class="delQ">Del</button></span>
+    </div>`).join("");
+  box.querySelectorAll(".loadQ").forEach(b=>b.addEventListener("click", e=>loadQuotation(e.target.dataset.id)));
+  box.querySelectorAll(".delQ").forEach(b=>b.addEventListener("click", e=>delQuotation(e.target.dataset.id)));
+}
+
+function loadQuotation(id){
+  const q = quotations.find(x=>x.id===id);
+  if(!q) return;
+  document.getElementById("quoteDate").value = q.date;
+  document.getElementById("quoteSubject").value = q.subject;
+  rows = JSON.parse(JSON.stringify(q.rows));
+  terms = [...q.terms];
+  renderRows(); renderTerms(); renderPreview();
+  flashToolbarStatus("Quotation loaded — edit and re-save if needed.");
+}
+
+async function delQuotation(id){
+  if(!confirm("Delete this saved quotation?")) return;
+  quotations = quotations.filter(q=>q.id!==id);
+  await storageSet("quotations-list", quotations);
+  renderSavedQuotesList();
+}
+
+function flashToolbarStatus(msg){
+  const bar = document.querySelector(".toolbar");
+  let el = document.getElementById("toolbarStatus");
+  if(!el){ el=document.createElement("span"); el.id="toolbarStatus"; el.style.cssText="align-self:center;font-size:12px;color:#3E6B4F;margin-right:auto;"; bar.prepend(el); }
+  el.textContent = msg;
+  setTimeout(()=>{ if(el) el.textContent=""; }, 3000);
+}
+
+/* ---------------- SHARE ---------------- */
+function buildShareText(){
+  const co = getCompanyForm();
+  const total = renderPreview();
+  const name = document.getElementById("clientName").value.trim() || "Client";
+  const date = fmtDateDMY(document.getElementById("quoteDate").value);
+  const lines = [];
+  lines.push(`Quotation for ${name} — ${date}`);
+  lines.push(`From: ${co.name}`);
+  lines.push("");
+  const groups = groupRows(rows);
+  groups.forEach(g=>{
+    const plants = g.items.map(r=>r.plant||"—").join(", ");
+    lines.push(`Plant(s): ${plants}`);
+    lines.push(`Treatment: ${g.treatment.replace(/\n/g," ")}`);
+    lines.push(`Frequency: ${g.frequency.replace(/\n/g," ")}`);
+    g.items.forEach(r=> lines.push(`  ${r.plant||"—"}: ${money(r.cost)} / month`));
+    lines.push("");
+  });
+  lines.push(`TOTAL: ${money(total)} per month`);
+  lines.push("");
+  lines.push("Full quotation attached as PDF. Please find our terms & conditions in the attached document.");
+  lines.push(`${co.name} | ${co.contact}`);
+  return lines.join("\n");
+}
+
+function whatsappShare(){
+  const text = buildShareText();
+  const url = "https://wa.me/?text=" + encodeURIComponent(text);
+  window.open(url, "_blank");
+  flashToolbarStatus("WhatsApp opened with the message — attach your saved PDF there.");
+}
+
+function emailShare(){
+  const name = document.getElementById("clientName").value.trim() || "Client";
+  const email = document.getElementById("clientEmail").value.trim();
+  const subject = "Quotation — " + name;
+  const body = buildShareText();
+  const url = `mailto:${encodeURIComponent(email)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.location.href = url;
+  if(email){
+    flashToolbarStatus(`Email draft opened, addressed to ${email} — attach your saved PDF before sending.`);
+  } else {
+    flashToolbarStatus("Email draft opened — add the client's email above to auto-fill the To: field next time.");
+  }
+}
+
+/* ---------------- EVENTS ---------------- */
+function bindEvents(){
+  document.getElementById("clientSelect").addEventListener("change", e=>onSelectClient(e.target.value));
+  document.getElementById("saveClientBtn").addEventListener("click", saveClient);
+  document.getElementById("deleteClientBtn").addEventListener("click", deleteClient);
+  document.getElementById("clientName").addEventListener("input", renderPreview);
+  document.getElementById("clientAddress").addEventListener("input", renderPreview);
+  document.getElementById("quoteDate").addEventListener("input", renderPreview);
+  document.getElementById("quoteSubject").addEventListener("input", renderPreview);
+  document.getElementById("addRowBtn").addEventListener("click", ()=>{ rows.push(DEFAULT_ROW()); renderRows(); renderPreview(); });
+  document.getElementById("addTermBtn").addEventListener("click", ()=>{ terms.push(""); renderTerms(); renderPreview(); });
+  document.getElementById("saveCompanyBtn").addEventListener("click", async ()=>{
+    await storageSet("company-info", getCompanyForm());
+    renderPreview();
+    flashToolbarStatus("Company details saved.");
+  });
+  ["coName","coContact","coOffice","coBranch","coEmail","coWebsite","coLicense","coServices"].forEach(id=>{
+    document.getElementById(id).addEventListener("input", renderPreview);
+  });
+  document.getElementById("saveQuoteBtn").addEventListener("click", saveQuotation);
+  document.getElementById("whatsappBtn").addEventListener("click", whatsappShare);
+  document.getElementById("emailBtn").addEventListener("click", emailShare);
+  document.getElementById("printBtn").addEventListener("click", ()=>window.print());
+  document.getElementById("exportBtn").addEventListener("click", exportBackup);
+  document.getElementById("importBtnTrigger").addEventListener("click", ()=>document.getElementById("importFile").click());
+  document.getElementById("importFile").addEventListener("change", e=>{
+    if(e.target.files[0]) importBackup(e.target.files[0]);
+  });
+}
+
+init();
+</script>
+</body>
+</html>
