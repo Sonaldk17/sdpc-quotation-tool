@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>SDPC Quotation Manager</title>
 <style>
 :root{
@@ -28,8 +29,9 @@ body{-webkit-font-smoothing:antialiased;}
 @media (max-width: 940px){ .app{grid-template-columns: 1fr;} }
 
 /* ---------- LEFT: control panel ---------- */
-.panel{background:var(--panel);border-right:1px solid var(--line);padding:22px 22px 60px;overflow-y:auto;}
+.panel{background:var(--panel);border-right:1px solid var(--line);padding:22px 22px 60px;overflow-y:auto;min-width:0;}
 @media (max-width: 940px){ .panel{border-right:none;border-bottom:1px solid var(--line);} }
+@media (max-width: 600px){ .panel{padding:16px 14px 40px;} }
 
 .brand-row{display:flex;align-items:center;gap:10px;margin-bottom:4px;}
 .brand-row img {
@@ -53,10 +55,11 @@ textarea{resize:vertical;min-height:46px;line-height:1.4;}
 input:focus,textarea:focus,select:focus{outline:2px solid var(--maroon);outline-offset:1px;background:#fff;}
 
 .client-picker{display:flex;gap:6px;}
-.client-picker select{flex:1;}
+.client-picker select{flex:1;min-width:0;}
 
 .row-card{border:1px solid var(--line);border-radius:8px;padding:12px;margin-bottom:10px;background:#FFFDFA;position:relative;}
 .row-card .grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px;}
+@media (max-width: 480px){ .row-card .grid2{grid-template-columns:1fr;} }
 .row-remove{position:absolute;top:8px;right:8px;background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer;padding:2px 6px;}
 .row-remove:hover{text-decoration:underline;}
 
@@ -79,17 +82,30 @@ button{font-family:var(--sans);cursor:pointer;}
 .status-msg{font-size:12px;margin-top:8px;min-height:16px;color:var(--ok);}
 
 /* ---------- RIGHT: preview ---------- */
-.preview-wrap{padding:32px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+.preview-wrap{padding:32px;display:flex;flex-direction:column;align-items:center;gap:16px;min-width:0;}
 .toolbar{width:100%;max-width:760px;display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+@media (max-width: 600px){
+  .preview-wrap{padding:14px 10px 30px;}
+  .toolbar{justify-content:stretch;}
+  .toolbar .btn{flex:1 1 calc(50% - 8px);text-align:center;}
+}
 
-.sheet{width:100%;max-width:760px;background:#fff;box-shadow:0 4px 24px rgba(42,36,32,.12);padding:40px 44px;font-family:var(--sans);color:#232019;}
-.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--maroon);padding-bottom:14px;margin-bottom:18px;}
+.sheet{width:100%;max-width:760px;background:#fff;box-shadow:0 4px 24px rgba(42,36,32,.12);padding:40px 44px;font-family:var(--sans);color:#232019;box-sizing:border-box;}
+@media (max-width: 600px){ .sheet{padding:22px 16px;} }
+.sheet-head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:2px solid var(--maroon);padding-bottom:14px;margin-bottom:18px;gap:12px;flex-wrap:wrap;}
 .sheet-brand{display:flex;align-items:center;gap:12px;}
 .sheet-logo img {
     width: 200px;
+    max-width: 40vw;
+    height: auto;
 }
 .sheet-contact{text-align:right;font-size:10.5px;line-height:1.6;color:#4a443c;}
 .sheet-contact b{color:#232019;}
+@media (max-width: 480px){
+  .sheet-head{flex-direction:column;align-items:flex-start;}
+  .sheet-logo img{max-width:160px;}
+  .sheet-contact{text-align:left;}
+}
 
 .sheet-title{text-align:center;font-family:var(--serif);font-size:17px;letter-spacing:.08em;margin:6px 0 18px;position:relative;}
 .sheet-title::after{content:"";display:block;width:64px;height:2px;background:var(--gold);margin:6px auto 0;}
@@ -99,12 +115,16 @@ button{font-family:var(--sans);cursor:pointer;}
 .sheet-sub{font-size:13px;margin-bottom:12px;}
 .sheet-para{font-size:13px;line-height:1.6;margin-bottom:16px;color:#3a352e;}
 
-table.qtable{width:100%;border-collapse:collapse;margin-bottom:16px;font-size:12px;}
+.qtable-scroll{width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:16px;}
+table.qtable{width:100%;border-collapse:collapse;margin-bottom:0;font-size:12px;}
 table.qtable th{background:var(--maroon);color:#fff;font-weight:600;padding:8px 7px;text-align:center;border:1px solid var(--maroon-deep);font-size:11px;}
 table.qtable td{border:1px solid #DED2C2;padding:7px;vertical-align:middle;text-align:center;}
 table.qtable td.plant{font-weight:600;}
 table.qtable td.left{text-align:left;}
 table.qtable tr.total-row td{background:#F3E4D8;font-weight:700;}
+@media (max-width: 600px){
+  table.qtable{min-width:620px;}
+}
 
 .sheet-includes{font-size:12.5px;margin-bottom:16px;}
 .sheet-includes .h{font-weight:700;margin-bottom:6px;}
@@ -116,6 +136,7 @@ table.qtable tr.total-row td{background:#F3E4D8;font-weight:700;}
 .sheet-close{font-size:13px;line-height:1.6;margin-bottom:34px;}
 .sheet-sign{text-align:right;font-size:13px;line-height:1.5;}
 .sheet-sign b{display:block;}
+@media (max-width: 480px){ .sheet-sign{text-align:left;} }
 
 .sheet-foot{border-top:1px solid var(--line);margin-top:20px;padding-top:10px;text-align:center;font-size:9.5px;line-height:1.6;color:#6b6157;}
 .sheet-foot b{color:#4a443c;}
@@ -134,7 +155,7 @@ table.qtable tr.total-row td{background:#F3E4D8;font-weight:700;}
 
   <!-- ================= LEFT CONTROL PANEL ================= -->
   <div class="panel">
-    <div class="brand-row"><img src="logo.png" alt=""><div class="brand-name">Quotation Manager</div></div>
+    <div class="brand-row"><img src="img/logo.png" alt=""><div class="brand-name">Quotation Manager</div></div>
     <p class="panel-sub">Build a quotation, save the client, then print or send it.</p>
 
     <div class="section">
@@ -224,7 +245,7 @@ table.qtable tr.total-row td{background:#F3E4D8;font-weight:700;}
       <div class="sheet-head">
         <div class="sheet-brand">
           <div class="sheet-logo">
-            <img src="logo.png" alt="">
+            <img src="img/logo.png" alt="">
           </div>
         </div>
         <div class="sheet-contact">
@@ -243,12 +264,14 @@ table.qtable tr.total-row td{background:#F3E4D8;font-weight:700;}
       <div class="sheet-sub"><b>Sub:</b> <span id="pv-subject"></span></div>
       <div class="sheet-para">Dear Sir,<br>Thank you for the opportunity to submit our quotation for pest control services at your premises. Based on your requirements, we are pleased to offer the following services along with our commercial terms and conditions.</div>
 
-      <table class="qtable">
-        <thead>
-          <tr><th>Plant</th><th>Treatment</th><th>Pests Treated</th><th>Area Covered</th><th>Services Frequency</th><th>Cost (per month)</th></tr>
-        </thead>
-        <tbody id="pv-tbody"></tbody>
-      </table>
+      <div class="qtable-scroll">
+        <table class="qtable">
+          <thead>
+            <tr><th>Plant</th><th>Treatment</th><th>Pests Treated</th><th>Area Covered</th><th>Services Frequency</th><th>Cost (per month)</th></tr>
+          </thead>
+          <tbody id="pv-tbody"></tbody>
+        </table>
+      </div>
 
       <div class="sheet-includes">
         <div class="h">Service Includes</div>
